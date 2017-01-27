@@ -103,6 +103,13 @@ void AShootingRangeCharacter::BeginPlay()
 	}
 }
 
+void AShootingRangeCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	CheckForInteractables();
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -113,6 +120,7 @@ void AShootingRangeCharacter::SetupPlayerInputComponent(class UInputComponent* P
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AShootingRangeCharacter::Interact); // added input to fire interact function
 
 	//InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AShootingRangeCharacter::TouchStarted);
 	if (EnableTouchscreenMovement(PlayerInputComponent) == false)
@@ -270,6 +278,38 @@ void AShootingRangeCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AShootingRangeCharacter::Interact()
+{
+	if (CurrentInteractable)
+	{
+		CurrentInteractable->OnInteract();
+	}
+}
+
+void AShootingRangeCharacter::CheckForInteractables() // check if player is looking at an interactable
+{
+	FHitResult HitResult;
+	FVector StartTrace = FirstPersonCameraComponent->GetComponentLocation(); // set up ray cast
+	FVector EndTrace = (FirstPersonCameraComponent->GetForwardVector() * 250.f) + StartTrace; // set up end of ray cast, 250 val the player can only look slightly infront of them
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this); // dont include player in trace
+
+	GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECollisionChannel::ECC_Visibility, QueryParams); //fire ray and check if connect with target
+
+	AInteractable* PotentialInteractable = Cast<AInteractable>(HitResult.GetActor()); //cast into a potential interactable and see if we have a hit
+
+	if (PotentialInteractable)
+	{
+		CurrentInteractable = PotentialInteractable;
+	}
+	else
+	{
+		CurrentInteractable = nullptr;
+	}
+
+	AShootingRangeGameMode* GameMode = Cast<AShootingRangeGameMode>(GetWorld()->GetAuthGameMode()); //return current game mode and cast into a game mode
 }
 
 bool AShootingRangeCharacter::EnableTouchscreenMovement(class UInputComponent* PlayerInputComponent)

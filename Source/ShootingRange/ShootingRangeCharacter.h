@@ -1,6 +1,7 @@
 // Copyright 1998-2016 Epic Games, Inc. All Rights Reserved.
 #pragma once
 #include "GameFramework/Character.h"
+#include "Interactable.h"
 #include "ShootingRangeCharacter.generated.h"
 
 class UInputComponent;
@@ -45,6 +46,8 @@ public:
 	AShootingRangeCharacter();
 
 	virtual void BeginPlay();
+
+	virtual void Tick(float DeltaTime) override;
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
@@ -103,6 +106,8 @@ protected:
 	void Interact();
 
 	void CheckForInteractables();
+
+	AInteractable* CurrentInteractable; // current interactable the player is looking at
 
 	struct TouchData
 	{

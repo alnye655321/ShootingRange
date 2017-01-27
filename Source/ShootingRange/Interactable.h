@@ -20,6 +20,10 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	
+	UPROPERTY(EditDefaultsOnly)
+		UStaticMeshComponent* InteractableMesh;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "On Interact") // BluePrintImplementable - let blueprints deal with this function
+		void OnInteract();
 	
 };

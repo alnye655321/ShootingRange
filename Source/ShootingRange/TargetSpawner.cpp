@@ -41,7 +41,7 @@ void ATargetSpawner::SpawnTarget()
 
 	//find out if the game is currently being played - has pressed button
 	AShootingRangeGameMode* GameMode = Cast<AShootingRangeGameMode>(GetWorld()->GetAuthGameMode()); //get the GameMode class then cast it into our  ShootingRangeGameMode
-	if (Target != NULL && GetWorld() && TargetsSpawned < 5) // check target counts and make sure game is not over - && !GameMode->GetGameIsOver()
+	if (Target != NULL && GetWorld() && TargetsSpawned < 5 && !GameMode->GetGameIsOver()) // check target counts and make sure game is not over - 
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this; // this is same as self in blueprints

@@ -1,8 +1,10 @@
 // Copyright 1998-2016 Epic Games, Inc. All Rights Reserved.
 
 #include "ShootingRange.h"
+#include "Target.h"
 #include "ShootingRangeCharacter.h"
 #include "ShootingRangeProjectile.h"
+#include "ShootingRangeGameMode.h"
 #include "Animation/AnimInstance.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/HeadMountedDisplayFunctionLibrary.h"
@@ -134,28 +136,27 @@ void AShootingRangeCharacter::SetupPlayerInputComponent(class UInputComponent* P
 
 void AShootingRangeCharacter::OnFire()
 {
-	// try and fire a projectile
-	if (ProjectileClass != NULL)
-	{
-		UWorld* const World = GetWorld();
-		if (World != NULL)
-		{
-			if (bUsingMotionControllers)
-			{
-				const FRotator SpawnRotation = VR_MuzzleLocation->GetComponentRotation();
-				const FVector SpawnLocation = VR_MuzzleLocation->GetComponentLocation();
-				World->SpawnActor<AShootingRangeProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
-			}
-			else
-			{
-				const FRotator SpawnRotation = GetControlRotation();
-				// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-				const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
 
-				// spawn the projectile at the muzzle
-				World->SpawnActor<AShootingRangeProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
-			}
-		}
+	FHitResult HitResult;
+	FVector StartTrace = FirstPersonCameraComponent->GetComponentLocation(); // set up ray cast
+	FVector EndTrace = (FirstPersonCameraComponent->GetForwardVector() * 4000.f) + StartTrace; // set up end of ray cast
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this); // dont include player in trace
+
+	GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECollisionChannel::ECC_Visibility, QueryParams); //fire ray and check if connect with target
+
+	ATarget* PotentialTarget = Cast<ATarget>(HitResult.GetActor()); //cast into a potential target and see if we have a hit
+
+	AShootingRangeGameMode* GameMode = Cast<AShootingRangeGameMode>(GetWorld()->GetAuthGameMode()); //return current game mode and cast into a game mode
+
+	if (PotentialTarget && !PotentialTarget->IsPendingKill()) //if the target exists and is not pending destruction ie. already shot the target
+	{
+		PotentialTarget->OnShot(); // call the targets OnShot method, ie. destroy the target
+		GameMode->AddPoint(); //add point if hit
+	}
+	else
+	{
+		GameMode->RemovePoint(); //remove point if miss
 	}
 
 	// try and play the sound if specified

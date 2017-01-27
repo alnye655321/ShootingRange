@@ -100,6 +100,10 @@ protected:
 	 */
 	void LookUpAtRate(float Rate);
 
+	void Interact();
+
+	void CheckForInteractables();
+
 	struct TouchData
 	{
 		TouchData() { bIsPressed = false;Location=FVector::ZeroVector;}

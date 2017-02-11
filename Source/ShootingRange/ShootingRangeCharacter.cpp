@@ -9,6 +9,7 @@
 #include "GameFramework/InputSettings.h"
 #include "Kismet/HeadMountedDisplayFunctionLibrary.h"
 #include "MotionControllerComponent.h"
+#include "Bullet.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -144,6 +145,34 @@ void AShootingRangeCharacter::SetupPlayerInputComponent(class UInputComponent* P
 
 void AShootingRangeCharacter::OnFire()
 {
+
+	// try and fire a projectile
+	if (ProjectileClass != NULL)
+	{
+		UWorld* const World = GetWorld();
+		if (World != NULL)
+		{
+			if (bUsingMotionControllers)
+			{
+				const FRotator SpawnRotation = VR_MuzzleLocation->GetComponentRotation();
+				const FVector SpawnLocation = VR_MuzzleLocation->GetComponentLocation();
+				World->SpawnActor<AShootingRangeProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+			}
+			else
+			{
+				const FRotator SpawnRotation = GetControlRotation();
+				// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+				const FVector SpawnLocation = ((FP_MuzzleLocation != nullptr) ? FP_MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
+
+				// spawn the projectile at the muzzle
+				ABullet* Bullet = World->SpawnActor<ABullet>(ProjectileClass, SpawnLocation, SpawnRotation); // create the bullet
+
+				FVector NewVelocity = GetActorForwardVector() * 5000.f;
+
+				Bullet->Velocity = FVector(NewVelocity);
+			}
+		}
+	}
 
 	FHitResult HitResult;
 	FVector StartTrace = FirstPersonCameraComponent->GetComponentLocation(); // set up ray cast

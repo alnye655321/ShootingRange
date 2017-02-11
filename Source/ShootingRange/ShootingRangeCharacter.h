@@ -3,6 +3,7 @@
 #include "GameFramework/Character.h"
 #include "Interactable.h"
 #include "ShootingRangeCharacter.generated.h"
+#include "Bullet.h"
 
 class UInputComponent;
 
@@ -63,7 +64,7 @@ public:
 
 	/** Projectile class to spawn */
 	UPROPERTY(EditDefaultsOnly, Category=Projectile)
-	TSubclassOf<class AShootingRangeProjectile> ProjectileClass;
+	TSubclassOf<class ABullet> ProjectileClass;
 
 	/** Sound to play each time we fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)

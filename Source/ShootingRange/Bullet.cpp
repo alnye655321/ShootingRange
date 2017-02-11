@@ -2,6 +2,7 @@
 
 #include "ShootingRange.h"
 #include "Bullet.h"
+#include "PhysicsEngine/DestructibleActor.h"
 
 
 // Sets default values
@@ -9,6 +10,10 @@ ABullet::ABullet()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
+
+	RootComponent = RootComp;
 
 }
 
@@ -37,19 +42,24 @@ void ABullet::Tick( float DeltaTime )
 	// this working only on destructible objects, can also replace with ECC_Visible
 	if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_Destructible, CollisionParams))
 	{
+
 		if(HitResult.GetActor()) // if hit result is an actor
 		{
 			// draw debug box around impact point of bullet, true parameter will leave box there, can also have a timed death
 			DrawDebugSolidBox(GetWorld(), HitResult.ImpactPoint, FVector(10.f), FColor::Blue, true);
-
-			// whatever we hit try to cast to destructible actor
-			//ADestructibleActor* Mesh = Cast<ADestructibleActor>(HitResult.GetActor());
-			//Mesh->GetDestructibleComponent()->ApplyRadiusDamage(10.f, HitResult.ImpactPoint, 32.f, 10.f, false);
-		}
-		else
-		{
-			// debug message, get name of actor class hit to log
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Could not get mesh. Type is %s"), *HitResult.GetActor()->StaticClass()->GetFName().ToString()));
+			// whatever we hit try to cast to destructible actor		
+			ADestructibleActor* Mesh = Cast<ADestructibleActor>(HitResult.GetActor());
+			
+			
+			if (Mesh) // did we find a mesh
+			{
+				Mesh->GetDestructibleComponent()->ApplyRadiusDamage(10.f, HitResult.ImpactPoint, 32.f, 10.f, false);
+			}
+			else // not a mesh and log
+			{
+				// debug message, get name of actor class hit to log
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Could not get mesh. Type is %s"), *HitResult.GetActor()->StaticClass()->GetFName().ToString()));
+			}			
 		}
 
 		Destroy();
@@ -59,7 +69,7 @@ void ABullet::Tick( float DeltaTime )
 	{
 		BulletExpiry += DeltaTime;
 
-		DrawDebugLine(GetWorld(), StartTrace, EndTrace, FColor(0.f, -BulletExpiry * 80.f, 100.f)); // change debug color based on bullet time
+		DrawDebugLine(GetWorld(), StartTrace, EndTrace, FColor(0.f, -BulletExpiry * 80.f, 100.f), true); // change debug color based on bullet time, true parameter leaves the line
 
 		// if we havent hit anything move the bullet to the end of the line trace
 		SetActorLocation(EndTrace);
@@ -67,6 +77,11 @@ void ABullet::Tick( float DeltaTime )
 		// changing velocity, dropping bullet, using DeltaTime to keep frame rate consistency
 		Velocity += FVector(0.f, 0.f, -200.f) * DeltaTime;
 
+	}
+
+	if (BulletExpiry > 3) // bullet has been in air for 3 seconds and hasn't hit anything, destroy
+	{
+		Destroy(0);
 	}
 }
 

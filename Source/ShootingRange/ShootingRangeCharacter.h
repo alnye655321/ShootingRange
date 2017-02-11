@@ -2,8 +2,9 @@
 #pragma once
 #include "GameFramework/Character.h"
 #include "Interactable.h"
-#include "ShootingRangeCharacter.generated.h"
 #include "Bullet.h"
+#include "ShootingRangeCharacter.generated.h"
+
 
 class UInputComponent;
 

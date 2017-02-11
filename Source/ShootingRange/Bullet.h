@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "PhysicsEngine/DestructibleActor.h"
 #include "Bullet.generated.h"
 
 UCLASS()
